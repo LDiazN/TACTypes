@@ -17,7 +17,6 @@
 -}
 
 module TAC where
-import qualified Utils.Types as T
 
 type Name = String
 
