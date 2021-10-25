@@ -16,7 +16,7 @@
             - Constant
 -}
 
-module TAC where
+module TACTypes.TAC where
 
 type Name = String
 
@@ -26,8 +26,11 @@ class SymEntryCompatible a where
   -- | Return symbol ID
   getSymID :: a -> String
 
+-- | Canonical program that every tac code generator should return 
+type TACProgram = [TACCode]
+
 -- | Atomic operation for a Three Address Program
-data TACCode a b = TACCode
+data TACCode = TACCode
     {   
         tacOperation :: Operation,      -- ^ tells which operation will be performed 
         tacLValue  :: Maybe LVOperand,  -- ^ Where the result will be stored
@@ -35,7 +38,7 @@ data TACCode a b = TACCode
         tacRValue2 :: Maybe RVOperand   -- ^ Second operation argument 
     } deriving (Eq)
 
-instance Show (TACCode a b) where
+instance Show TACCode where
     show TACCode {tacOperation=Add,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand  " := " rvoperand1 " + " rvoperand2 -- lvalue := rvalue1 + ravlue2
     show TACCode {tacOperation=Sub,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand  " := " rvoperand1 " - " rvoperand2 -- lvalue := rvalue1 - ravlue2
     show TACCode {tacOperation=Mult,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand  " := " rvoperand1 " * " rvoperand2 -- lvalue := rvalue1 * ravlue2
@@ -53,12 +56,12 @@ data RVOperand = RVOperand deriving(Eq, Show)
 data Operation =
     Assign        |
     -- Arithmetic
-    Add            | -- | Addition
-    Sub            | -- | Substraction
-    Mult           | -- | Multiplication
-    Div            | -- | Divition
-    Mod            | -- | Module 
-    Minus            -- | negative operator
+    Add            | -- ^ Addition
+    Sub            | -- ^ Substraction
+    Mult           | -- ^ Multiplication
+    Div            | -- ^ Divition
+    Mod            | -- ^ Module 
+    Minus            -- ^ negative operator
     deriving (Eq, Show)
 
 -- < Utility Functions > ---
