@@ -4,22 +4,39 @@ Definiciones de tipos para el tipo de dato `TAC`, implementación común para lo
 ```
 assign ADDR X
 
+// Jumps
 goto LABEL
 goif LABEL X
 
-eq  ADDR X Y
-neq ADDR X Y
-lt  ADDR X Y
-leq ADDR X Y
-gt  ADDR X Y
-geq ADDR X Y
+// Comparators
+eq  LVAL X Y
+neq LVAL X Y
+lt  LVAL X Y
+leq LVAL X Y
+gt  LVAL X Y
+geq LVAL X Y
 
-add  ADDR X Y
-sub  ADDR X Y
-mult ADDR X Y
-div  ADDR X Y
-mod  ADDR X Y
+// Boolean operators
+and LVAL X Y
+or  LVAL X Y
+neg LVAL X 
 
-param ADDR
-call  ADDR X
+// Numeric operators
+add   LVAL X Y
+sub   LVAL X Y
+mult  LVAL X Y
+div   LVAL X Y
+mod   LVAL X Y
+minus LVAL X
+
+// Memory management
+malloc   LVAL size
+free     X
+deref    LVAL X
+@staticv LABEL size : create a .data object named with LABEL and size 'size'
+
+// Functions?
+param LVAL
+call  LVAL X
 ```
+Please note that instructions starting with the `@` prefix are actually meta instructions for the compiler.
