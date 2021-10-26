@@ -39,13 +39,40 @@ data TACCode = TACCode
     } deriving (Eq)
 
 instance Show TACCode where
+    show TACCode {tacOperation=Goto,      tacLValue=Just lvoperand, tacRValue1=Nothing,        tacRValue2=Nothing } = "\t" ++ _showOneOps " goto " lvoperand                                  -- goto LABEL
+    show TACCode {tacOperation=Goif,      tacLValue=Just lvoperand, tacRValue1=Just rvoperand, tacRValue2=Nothing } = "\tgoif " ++ show  lvoperand ++ " " ++ show rvoperand                   -- goto LABEL rvalue
+    show TACCode {tacOperation=MetaLabel, tacLValue=Just lvoperand, tacRValue1=Nothing,        tacRValue2=Nothing}  = _showOneOps "@label " lvoperand                                         -- @label MyLabel
+
+    show TACCode {tacOperation=Eq,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand " := " rvoperand1 " == " rvoperand2   -- x := y == z
+    show TACCode {tacOperation=Neq, tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand " := " rvoperand1 " != " rvoperand2   -- x := y != z
+    show TACCode {tacOperation=Lt,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand " := " rvoperand1 " < " rvoperand2    -- x := y < z
+    show TACCode {tacOperation=Leq, tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand " := " rvoperand1 " <= " rvoperand2   -- x := y <= z
+    show TACCode {tacOperation=Gt,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand " := " rvoperand1 " > " rvoperand2    -- x := y == z
+    show TACCode {tacOperation=Geq, tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand " := " rvoperand1 " >= " rvoperand2   -- x := y == z
+
+    show TACCode {tacOperation=And, tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2}   = "\t" ++ _showThreeOps lvoperand " := " rvoperand1 " && " rvoperand2   -- x := y == z
+    show TACCode {tacOperation=Or,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2}   = "\t" ++ _showThreeOps lvoperand " := " rvoperand1 " || " rvoperand2   -- x := y == z
+    show TACCode {tacOperation=Neg, tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing} = "\t" ++ _showTwoOps lvoperand " := !" rvoperand1                                -- x := !y
+
     show TACCode {tacOperation=Add,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand  " := " rvoperand1 " + " rvoperand2 -- lvalue := rvalue1 + ravlue2
     show TACCode {tacOperation=Sub,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand  " := " rvoperand1 " - " rvoperand2 -- lvalue := rvalue1 - ravlue2
-    show TACCode {tacOperation=Mult,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand  " := " rvoperand1 " * " rvoperand2 -- lvalue := rvalue1 * ravlue2
+    show TACCode {tacOperation=Mult, tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand  " := " rvoperand1 " * " rvoperand2 -- lvalue := rvalue1 * ravlue2
     show TACCode {tacOperation=Div,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand  " := " rvoperand1 " / " rvoperand2 -- lvalue := rvalue1 / ravlue2
     show TACCode {tacOperation=Mod,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand  " := " rvoperand1 " % " rvoperand2 -- lvalue := rvalue1 % ravlue2
-    show TACCode {tacOperation=Minus,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing} = "\t" ++ _showTwoOps lvoperand  " := -" rvoperand1                         -- lvalue := - rvalue1 
+    show TACCode {tacOperation=Minus,tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing}   = "\t" ++ _showTwoOps lvoperand  " := -" rvoperand1                         -- lvalue := - rvalue1 
 
+    show TACCode {tacOperation=Malloc, tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing} = "\t" ++ _showTwoOps lvoperand  " := malloc( " rvoperand1 ++ " )"          -- lvalue := malloc(rvalue)
+    show TACCode {tacOperation=Free,   tacLValue=Just lvoperand, tacRValue1=Nothing,         tacRValue2=Nothing} = "\t" ++ _showOneOps "free " lvoperand                                     -- free lvalue
+    show TACCode {tacOperation=Deref,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing} = "\t" ++ _showTwoOps lvoperand  " := * " rvoperand1                        -- lvalue := malloc(rvalue)
+    show TACCode {tacOperation=MetaStaticv,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing} = "@staticv " ++ show lvoperand ++ " " ++ show rvoperand1             -- lvalue := malloc(rvalue)
+
+
+    show (TACCode _tacOperation _tacLValue _tacRValue1 _tacRValue2) = error $ 
+        "Invalid configuration for TACCode."   ++ 
+        "\n\tOperator: " ++ show _tacOperation ++
+        "\n\tlvalue: "   ++ show _tacLValue    ++ 
+        "\n\trvalue 1: " ++ show _tacRValue1   ++ 
+        "\n\trvalue 2: " ++ show _tacRValue2 
 
 -- | Possible values for an operation. 'a' should be SymEntryCompatible 
 data LVOperand = LVOperand deriving(Eq, Show)
@@ -95,3 +122,6 @@ _showThreeOps lvopr s1 rvopr1 s2 rvopr2 = show lvopr ++ s1 ++ show rvopr1 ++ s2 
 
 _showTwoOps :: LVOperand -> String -> RVOperand -> String
 _showTwoOps lvopr s1 rvopr1 = show lvopr ++ s1 ++ show rvopr1
+
+_showOneOps :: String -> LVOperand -> String
+_showOneOps s lvopr = s ++ show lvopr 
