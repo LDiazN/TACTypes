@@ -55,7 +55,7 @@ True | False :: Bool     // for example: False
 ```
 ## Instruction serialization
 ```
-<instruction name> LVAL (Maybe RVAL) (MAYBE RVAL) 
+<instruction name> LVAL (Maybe RVAL) (Maybe RVAL) 
 For example:
   add x 2 y
   free z
