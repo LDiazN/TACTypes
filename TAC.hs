@@ -46,7 +46,6 @@ instance Show TACCode where
     show TACCode {tacOperation=Mod,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand  " := " rvoperand1 " % " rvoperand2 -- lvalue := rvalue1 % ravlue2
     show TACCode {tacOperation=Minus,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing} = "\t" ++ _showTwoOps lvoperand  " := -" rvoperand1                         -- lvalue := - rvalue1 
 
--- add $resultado $opr1 $opr2
 
 -- | Possible values for an operation. 'a' should be SymEntryCompatible 
 data LVOperand = LVOperand deriving(Eq, Show)
@@ -54,14 +53,40 @@ data RVOperand = RVOperand deriving(Eq, Show)
 
 -- | Possible operation you can perform with the given operands, describes the generated TACCode
 data Operation =
-    Assign        |
+    Assign      |
+
+    -- Jumps & control flow
+    Goto        |   -- ^ Go to specific Label
+    Goif        |   -- ^ Go to specific Label when the given variable is true
+    MetaLabel   |   -- ^ Meta instruction to define a label at some specific point in the program
+
+    -- Relational operators
+    Eq          |   -- ^ Equality
+    Neq         |   -- ^ Non-equality
+    Lt          |   -- ^ Less than
+    Leq         |   -- ^ Less than or equal
+    Gt          |   -- ^ Greater than
+    Geq         |   -- ^ Greater than or equal
+
+    -- Boolean (not bitwise)
+    And         |   -- ^ a && b
+    Or          |   -- ^ a || b
+    Neg         |   -- ^ !a
+
     -- Arithmetic
-    Add            | -- ^ Addition
-    Sub            | -- ^ Substraction
-    Mult           | -- ^ Multiplication
-    Div            | -- ^ Divition
-    Mod            | -- ^ Module 
-    Minus            -- ^ negative operator
+    Add         | -- ^ Addition
+    Sub         | -- ^ Substraction
+    Mult        | -- ^ Multiplication
+    Div         | -- ^ Divition
+    Mod         | -- ^ Module 
+    Minus       | -- ^ negative operator
+
+    -- Memory management
+    Malloc          | -- ^ Get n bytes of memory and return its start point 
+    Free            | -- ^ Free the memory starting at the given location
+    Deref           | -- ^ retrieve value in this memory address
+    MetaStaticv       -- ^ Create a static variable named by a given name with the requested size in bytes and return its address
+
     deriving (Eq, Show)
 
 -- < Utility Functions > ---
