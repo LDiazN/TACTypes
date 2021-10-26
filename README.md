@@ -33,10 +33,24 @@ minus LVAL X
 malloc   LVAL size
 free     X
 deref    LVAL X
-@staticv LABEL size : create a .data object named with LABEL and size 'size'
+@staticv LABEL size // create a .data object named with LABEL and size 'size'
+
+@label LABEL        // create a label at this point in the program
 
 // Functions?
 param LVAL
 call  LVAL X
 ```
 Please note that instructions starting with the `@` prefix are actually meta instructions for the compiler.
+
+# Serialization
+In order to have some iteroperability between multiple compilers, we need serialization. And this is the serialization format:
+
+## Constant serialization
+```
+'<char>'    :: character // for example: 'c'
+<num>       :: int       // for example: 1
+<num>.<num> :: float     // for example: 1.0
+True | False :: Bool     // for example: False
+```
+
