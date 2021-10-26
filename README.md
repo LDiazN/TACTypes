@@ -53,4 +53,12 @@ In order to have some iteroperability between multiple compilers, we need serial
 <num>.<num> :: float     // for example: 1.0
 True | False :: Bool     // for example: False
 ```
+## Instruction serialization
+```
+<instruction name> LVAL (Maybe RVAL) (MAYBE RVAL) 
+For example:
+  add x 2 y
+  free z
+  @label foo
+```
 
