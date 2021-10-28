@@ -26,8 +26,10 @@ class SymEntryCompatible a where
   -- | Return symbol ID
   getSymID :: a -> String
 
+data TypeInfo = HOLALUIS deriving(Show, Read)
+
 -- | Canonical program that every tac code generator should return 
-type TACProgram b = [TACCode b]
+type TACProgram = [TACCode TypeInfo]
 
 -- | Atomic operation for a Three Address Program. 'b' It's some custom type you can use for type information
 data TACCode b = TACCode
@@ -75,7 +77,10 @@ instance Show (TACCode b) where
         "\n\trvalue 2: " ++ show _tacRValue2 
 
 -- | Possible values for an operation. 'a' should be SymEntryCompatible 
-newtype LVOperand =  LVId String deriving(Eq, Read)
+data LVOperand =  
+    LVId String     |
+    LVLabel String    
+    deriving(Eq, Read)
 
 instance Show LVOperand where
     show (LVId sym) = sym
@@ -146,5 +151,5 @@ _showOneOps s lvopr = s ++ show lvopr
 
 
 -- | convert from string representation to a tac program
-parse ::  Read b => String -> TACProgram b
+parse :: String -> TACProgram
 parse = map read . lines 
