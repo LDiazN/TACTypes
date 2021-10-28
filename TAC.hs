@@ -27,18 +27,18 @@ class SymEntryCompatible a where
   getSymID :: a -> String
 
 -- | Canonical program that every tac code generator should return 
-type TACProgram = [TACCode]
+type TACProgram b = [TACCode b]
 
--- | Atomic operation for a Three Address Program
-data TACCode = TACCode
+-- | Atomic operation for a Three Address Program. 'b' It's some custom type you can use for type information
+data TACCode b = TACCode
     {   
         tacOperation :: Operation,      -- ^ tells which operation will be performed 
         tacLValue  :: Maybe LVOperand,  -- ^ Where the result will be stored
-        tacRValue1 :: Maybe RVOperand,  -- ^ first operation argument 
-        tacRValue2 :: Maybe RVOperand   -- ^ Second operation argument 
-    } deriving (Eq)
+        tacRValue1 :: Maybe (RVOperand b),  -- ^ first operation argument 
+        tacRValue2 :: Maybe (RVOperand b)   -- ^ Second operation argument 
+    } deriving (Eq, Read)
 
-instance Show TACCode where
+instance Show (TACCode b) where
     show TACCode {tacOperation=Goto,      tacLValue=Just lvoperand, tacRValue1=Nothing,        tacRValue2=Nothing } = "\t" ++ _showOneOps " goto " lvoperand                                  -- goto LABEL
     show TACCode {tacOperation=Goif,      tacLValue=Just lvoperand, tacRValue1=Just rvoperand, tacRValue2=Nothing } = "\tgoif " ++ show  lvoperand ++ " " ++ show rvoperand                   -- goto LABEL rvalue
     show TACCode {tacOperation=MetaLabel, tacLValue=Just lvoperand, tacRValue1=Nothing,        tacRValue2=Nothing}  = _showOneOps "@label " lvoperand                                         -- @label MyLabel
@@ -75,8 +75,26 @@ instance Show TACCode where
         "\n\trvalue 2: " ++ show _tacRValue2 
 
 -- | Possible values for an operation. 'a' should be SymEntryCompatible 
-data LVOperand = LVOperand deriving(Eq, Show)
-data RVOperand = RVOperand deriving(Eq, Show)
+newtype LVOperand =  LVId String deriving(Eq, Read)
+
+instance Show LVOperand where
+    show (LVId sym) = sym
+
+-- | Possible variations for an r-value. 
+data RVOperand b = 
+    RVId String    | -- ^ A variable defined by its name. 
+    Label String   | -- ^ A label value, with a string as its name
+    Constant 
+    {
+        repr :: String,
+        typeInfo :: b
+    }                -- ^ A constant represented by repr and with its type information as b 
+    deriving(Eq, Read)
+
+instance Show (RVOperand b) where
+    show (RVId sym) =  sym
+    show (Label s) = s
+    show (Constant repr _) = repr
 
 -- | Possible operation you can perform with the given operands, describes the generated TACCode
 data Operation =
@@ -114,14 +132,19 @@ data Operation =
     Deref           | -- ^ retrieve value in this memory address
     MetaStaticv       -- ^ Create a static variable named by a given name with the requested size in bytes and return its address
 
-    deriving (Eq, Show)
+    deriving (Eq, Show, Read)
 
 -- < Utility Functions > ---
-_showThreeOps :: LVOperand -> String -> RVOperand -> String -> RVOperand -> String
+_showThreeOps :: LVOperand -> String -> RVOperand b -> String -> RVOperand b -> String
 _showThreeOps lvopr s1 rvopr1 s2 rvopr2 = show lvopr ++ s1 ++ show rvopr1 ++ s2 ++ show rvopr2
 
-_showTwoOps :: LVOperand -> String -> RVOperand -> String
+_showTwoOps :: LVOperand -> String -> RVOperand b -> String
 _showTwoOps lvopr s1 rvopr1 = show lvopr ++ s1 ++ show rvopr1
 
 _showOneOps :: String -> LVOperand -> String
 _showOneOps s lvopr = s ++ show lvopr 
+
+
+-- | convert from string representation to a tac program
+parse ::  Read b => String -> TACProgram b
+parse = map read . lines 
