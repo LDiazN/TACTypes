@@ -15,10 +15,9 @@
             - Variable  
             - Constant
 -}
-
+{-# OPTIONS_GHC -Wall #-}
 module TACTypes.TAC where
 import Data.Char(isDigit, isSpace)
-import qualified Data.Text as T
 import qualified Data.List as L
 import Data.Functor((<&>))
 import Text.Read(readMaybe)
@@ -32,7 +31,7 @@ class SymEntryCompatible a where
   getSymID :: a -> String
 
 -- | Canonical program that every tac code generator should return 
-type TACProgram = [TACCode]
+newtype TACProgram = TACProgram [TACCode]
 
 -- | Atomic operation for a Three Address Program. 'b' It's some custom type you can use for type information
 data TACCode = TACCode
@@ -88,6 +87,7 @@ data LVOperand =
 
 instance Show LVOperand where
     show (LVId sym) = sym
+    show (LVLabel l) = l
 
 -- | Possible variations for an r-value. 
 data RVOperand =
@@ -149,13 +149,17 @@ data Operation =
 
 -- | convert from string representation to a tac program
 parse :: String -> TACProgram
-parse = map read . lines
+parse = TACProgram . map read . lines
 
 -- < Read & Show instances > ------------------------------
+instance Show TACProgram where
+    show (TACProgram l) = unlines . map show $ l
+
 instance Show ConstantValue where
     show (Char c) = ['\'', c, '\'']
     show (Float f) = show f
     show (Int i) = show i
+    show (Bool b) = show b
 
 instance Read ConstantValue where
     readsPrec _ ('\'' : c : '\'' : rest) = [(Char c, rest)]
@@ -232,7 +236,7 @@ instance Read TACCode where
                         "-" -> Minus
                         "!" -> Neg
                         "*" -> Deref 
-                        s   -> error $ "Unknown operator: " ++ s 
+                        _   -> error $ "Unknown operator: " ++ word2 ++ ". Original String: " ++ s
             -- In case of 3 addr instr
             ans3addrs = (TACCode opr' (Just . read $ word0) (Just . read $ word2) (Just . read $ word4), rest4)
             ans2addrs = (TACCode opr' (Just . read $ word0) (Just . read $ word3) Nothing, rest3)
@@ -249,7 +253,6 @@ instance Read TACCode where
                 | opr' == Goif = (TACCode opr' (Just $ LVLabel word1) (Just . read $ word2) Nothing, rest2)
                 | opr' == Goto = (TACCode opr' (Just $ LVLabel word1) Nothing Nothing, rest1)
                 | opr' == Free = (TACCode opr' (Just $ LVId word1) Nothing Nothing, rest1)
-                | opr' == MetaStaticv   = (TACCode opr' (Just $ LVId word1) Nothing Nothing, rest1)
                 | opr' == MetaLabel     = (TACCode opr' (Just $ LVId word1) Nothing Nothing, rest1)
 
                 -- 3 addrs operators
@@ -268,7 +271,8 @@ instance Read TACCode where
                 | opr' == Mod  = ans3addrs 
 
                 -- 2 addrs operators
-                | opr' == Malloc = ans2addrs
+                | opr' == MetaStaticv   = (TACCode opr' (Just $ LVId word1)(Just . read $ word2) Nothing, rest2)
+                | opr' == Malloc = (TACCode opr' (Just . read $ word0) (Just . read $ word3) Nothing, rest4)
                 | opr' == Minus  = ans2addrs 
                 | opr' == Neg    = ans2addrs 
                 | opr' == Deref  = ans2addrs 
@@ -288,3 +292,17 @@ _showTwoOps lvopr s1 rvopr1 = show lvopr ++ s1 ++ show rvopr1
 _showOneOps :: String -> LVOperand -> String
 _showOneOps s lvopr = s ++ show lvopr
 
+---------------------------------------------------------
+main :: IO()
+main = do
+    let 
+        add     = TACCode Add  (Just (LVId "x")) (Just $ RVId  "y") (Just $ RVId "z")
+        neg     = TACCode Neg  (Just (LVId "x")) (Just . Constant . Int $ 1 ) Nothing
+        malloc  = TACCode Malloc  (Just (LVId "x")) (Just . Constant . Int $ 100 ) Nothing
+        free    = TACCode Free  (Just (LVId "x")) Nothing Nothing
+        label   = TACCode MetaLabel  (Just (LVLabel "asad")) Nothing Nothing
+        stativc = TACCode MetaStaticv  (Just (LVId "x")) (Just . Constant . Int $ 3) Nothing
+
+        tacProgram = TACProgram [add,neg,malloc,free,label,stativc]
+        _ = read "@label asdad" :: TACCode
+    print tacProgram
