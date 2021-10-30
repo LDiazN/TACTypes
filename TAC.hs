@@ -15,7 +15,6 @@
             - Variable  
             - Constant
 -}
-{-# OPTIONS_GHC -Wall #-}
 module TACTypes.TAC where
 import Data.Char(isDigit, isSpace)
 import qualified Data.List as L
@@ -292,17 +291,3 @@ _showTwoOps lvopr s1 rvopr1 = show lvopr ++ s1 ++ show rvopr1
 _showOneOps :: String -> LVOperand -> String
 _showOneOps s lvopr = s ++ show lvopr
 
----------------------------------------------------------
-main :: IO()
-main = do
-    let 
-        add     = TACCode Add  (Just (LVId "x")) (Just $ RVId  "y") (Just $ RVId "z")
-        neg     = TACCode Neg  (Just (LVId "x")) (Just . Constant . Int $ 1 ) Nothing
-        malloc  = TACCode Malloc  (Just (LVId "x")) (Just . Constant . Int $ 100 ) Nothing
-        free    = TACCode Free  (Just (LVId "x")) Nothing Nothing
-        label   = TACCode MetaLabel  (Just (LVLabel "asad")) Nothing Nothing
-        stativc = TACCode MetaStaticv  (Just (LVId "x")) (Just . Constant . Int $ 3) Nothing
-
-        tacProgram = TACProgram [add,neg,malloc,free,label,stativc]
-        _ = read "@label asdad" :: TACCode
-    print tacProgram
