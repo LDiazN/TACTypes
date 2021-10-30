@@ -32,7 +32,7 @@ class SymEntryCompatible a where
   getSymID :: a -> String
 
 -- | Canonical program that every tac code generator should return 
-type TACProgram = [TACCode ]
+type TACProgram = [TACCode]
 
 -- | Atomic operation for a Three Address Program. 'b' It's some custom type you can use for type information
 data TACCode = TACCode
@@ -288,10 +288,3 @@ _showTwoOps lvopr s1 rvopr1 = show lvopr ++ s1 ++ show rvopr1
 _showOneOps :: String -> LVOperand -> String
 _showOneOps s lvopr = s ++ show lvopr
 
----------------------------------------------------------
-main :: IO()
-main = do
-    let 
-        add = TACCode Add  (Just (LVId "x")) (Just $ RVId  "y") (Just $ RVId "z")
-        x = read "x := y + z" :: TACCode
-    print x
