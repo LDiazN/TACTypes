@@ -156,14 +156,6 @@ data Operation =
 parse :: String -> TACProgram
 parse = TACProgram . map read . lines
 
--- < TAC Utility Functions > ------------------------------
--- | Shortcut function to create a tac code instance easier
-newTAC :: Operation -> LVOperand -> [RVOperand] -> TACCode
-newTAC opr lv [] = TACCode opr (Just lv) Nothing Nothing  
-newTAC opr lv [rv1] = TACCode opr (Just lv) (Just rv1) Nothing  
-newTAC opr lv [rv1, rv2] = TACCode opr (Just lv) (Just rv1) (Just rv2)
-newTAC _ _ _ = error "Invalid arguments"  
-
 -- < Read & Show instances > ------------------------------
 instance Show TACProgram where
     show (TACProgram l) = unlines . map show $ l
