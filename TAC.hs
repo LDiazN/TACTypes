@@ -67,7 +67,9 @@ instance Show TACCode where
     show TACCode {tacOperation=Malloc, tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing} = "\t" ++ _showTwoOps lvoperand  " := malloc( " rvoperand1 ++ " )"          -- lvalue := malloc(rvalue)
     show TACCode {tacOperation=Free,   tacLValue=Just lvoperand, tacRValue1=Nothing,         tacRValue2=Nothing} = "\t" ++ _showOneOps "free " lvoperand                                     -- free lvalue
     show TACCode {tacOperation=Deref,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing} = "\t" ++ _showTwoOps lvoperand  " := * " rvoperand1                        -- lvalue := *rvalue
+    show TACCode {tacOperation=Ref,    tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing} = "\t" ++ _showTwoOps lvoperand  " := & " rvoperand1                        -- lvalue := &rvalue
     show TACCode {tacOperation=MetaStaticv,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing} = "@staticv " ++ show lvoperand ++ " " ++ show rvoperand1             -- @staticv lvalue rvalue
+    show TACCode {tacOperation=MetaStaticStr, tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing} = "@string " ++ show lvoperand ++ " \"" ++ show rvoperand1 ++ "\""   -- @string lvalue rvalue
 
     show TACCode {tacOperation=Call, tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand " := call " rvoperand1 " " rvoperand2 -- x := call FNAME 3
     show TACCode {tacOperation=Param, tacLValue=Just lvoperand, tacRValue1=Nothing, tacRValue2=Nothing} = "\t" ++ _showOneOps "param " lvoperand
@@ -102,7 +104,8 @@ data ConstantValue =
     Float Float |
     Int Int     |
     Char Char   |
-    Bool Bool   
+    Bool Bool   |
+    String String
     deriving(Eq)
 
 instance Show RVOperand where
@@ -144,7 +147,9 @@ data Operation =
     Malloc          | -- ^ Get n bytes of memory and return its start point 
     Free            | -- ^ Free the memory starting at the given location
     Deref           | -- ^ retrieve value in this memory address
+    Ref             | -- ^ get memory address associated with a tac id
     MetaStaticv     | -- ^ Create a static variable named by a given name with the requested size in bytes and return its address
+    MetaStaticStr   | -- ^ Create a static string named by a given name and return its address
 
     -- Function calling
     Call            | -- ^ Call a function with n stacked arguments
@@ -173,9 +178,13 @@ instance Show ConstantValue where
     show (Float f) = show f
     show (Int i) = show i
     show (Bool b) = show b
+    show (String s) = show s
 
 instance Read ConstantValue where
     readsPrec _ ('\'' : c : '\'' : rest) = [(Char c, rest)]
+    readsPrec _ ('\"':s) = [(String s', tail rest)]
+        where
+            (s',rest) = span (/= '\"') s
     readsPrec _ s =
         let
             (nums1, rest1) = span isDigit s
@@ -209,7 +218,7 @@ _nextWord s = (ans, _trim rest)
 
 -- Utility function to tell if a string starts with some unary operator
 _startsWithUnary :: String -> Bool
-_startsWithUnary s = (`L.isPrefixOf` s) `any`  ["goto", "goif", "free", "@staticv", "@label"]
+_startsWithUnary s = (`L.isPrefixOf` s) `any`  ["goto", "goif", "free", "@staticv", "@string", "@label"]
 
 -- Utility function to trim a string
 _trim :: String -> String
@@ -230,6 +239,7 @@ instance Read TACCode where
                 "@label"   -> MetaLabel
                 "free"     -> Free
                 "@staticv" -> MetaStaticv
+                "@string"  -> MetaStaticStr
                 "param"    -> Param
                 _ -> case word3 of
                     "==" -> Eq 
@@ -250,7 +260,8 @@ instance Read TACCode where
                         "call"    -> Call
                         "-" -> Minus
                         "!" -> Neg
-                        "*" -> Deref 
+                        "*" -> Deref
+                        "&" -> Ref 
                         _   -> error $ "Unknown operator: " ++ word2 ++ ". Original String: " ++ s
 
             -- In case of 3 addr instr
@@ -290,11 +301,13 @@ instance Read TACCode where
 
                 -- 2 addrs operators
                 | opr' == MetaStaticv   = (TACCode opr' (Just $ LVId word1)(Just . read $ word2) Nothing, rest2)
+                | opr' == MetaStaticStr = (TACCode opr' (Just $ LVId word1)(Just . read $ word2) Nothing, rest2)
                 | opr' == Malloc = (TACCode opr' (Just . read $ word0) (Just . read $ word3) Nothing, rest4)
                 | opr' == Call   = (TACCode opr' (Just . read $ word0) (Just . read $ word3)  (Just . read $ word4), rest4)
                 | opr' == Minus  = ans2addrs 
                 | opr' == Neg    = ans2addrs 
                 | opr' == Deref  = ans2addrs 
+                | opr' == Ref    = ans2addrs
                 | otherwise  = error $ "Invalid operator: " ++ show opr'
         in [tcode]
 

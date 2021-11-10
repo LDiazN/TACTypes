@@ -33,8 +33,10 @@ minus LVAL X
 malloc   LVAL size
 free     X
 deref    LVAL X
+ref      LVAL X
 @staticv LABEL size // create a .data object named with LABEL and size 'size'
 
+@string LABEL S     // create a .data literal string S named with LABEL 
 @label LABEL        // create a label at this point in the program
 
 // Functions?
