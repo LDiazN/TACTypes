@@ -32,7 +32,8 @@ minus LVAL X
 // Memory management
 malloc   LVAL size
 free     X
-deref    LVAL X
+LVAL [ X ] = Y
+LVAL = X [ Y ]
 ref      LVAL X
 @staticv LABEL size // create a .data object named with LABEL and size 'size'
 

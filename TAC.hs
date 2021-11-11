@@ -67,7 +67,8 @@ instance Show TACCode where
 
     show TACCode {tacOperation=Malloc, tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing} = "\t" ++ _showTwoOps lvoperand  " := malloc( " rvoperand1 ++ " )"          -- lvalue := malloc(rvalue)
     show TACCode {tacOperation=Free,   tacLValue=Just lvoperand, tacRValue1=Nothing,         tacRValue2=Nothing} = "\t" ++ _showOneOps "free " lvoperand                                     -- free lvalue
-    show TACCode {tacOperation=Deref,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing} = "\t" ++ _showTwoOps lvoperand  " := * " rvoperand1                        -- lvalue := *rvalue
+    show TACCode {tacOperation=LDeref,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ show lvoperand ++ " [ " ++ show rvoperand1 ++ " ] := " ++ show rvoperand2        -- lvalue [ rvalue1 ] := rvalue2
+    show TACCode {tacOperation=RDeref,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ show lvoperand ++ " := " ++ show rvoperand1 ++ " [ " ++ show rvoperand2 ++ " ] " -- lvalue := rvalue1 [ rvalue2 ]
     show TACCode {tacOperation=Ref,    tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing} = "\t" ++ _showTwoOps lvoperand  " := & " rvoperand1                        -- lvalue := &rvalue
     show TACCode {tacOperation=MetaStaticv,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing} = "@staticv " ++ show lvoperand ++ " " ++ show rvoperand1             -- @staticv lvalue rvalue
     show TACCode {tacOperation=MetaStaticStr, tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing} = "@string " ++ show lvoperand ++ " \"" ++ show rvoperand1 ++ "\""   -- @string lvalue rvalue
@@ -147,7 +148,8 @@ data Operation =
     -- Memory management
     Malloc          | -- ^ Get n bytes of memory and return its start point 
     Free            | -- ^ Free the memory starting at the given location
-    Deref           | -- ^ retrieve value in this memory address
+    LDeref          | -- ^ assign value in this memory address with the given offset
+    RDeref          | -- ^ retrieve value in this memory address with the given offset
     Ref             | -- ^ get memory address associated with a tac id
     MetaStaticv     | -- ^ Create a static variable named by a given name with the requested size in bytes and return its address
     MetaStaticStr   | -- ^ Create a static string named by a given name and return its address
@@ -179,7 +181,7 @@ instance Show ConstantValue where
     show (Float f) = show f
     show (Int i) = show i
     show (Bool b) = show b
-    show (String s) = show s
+    show (String s) = s
 
 instance Read ConstantValue where
     readsPrec _ ('\'' : c : '\'' : rest) = [(Char c, rest)]
@@ -261,7 +263,7 @@ instance Read TACCode where
                         "call"    -> Call
                         "-" -> Minus
                         "!" -> Neg
-                        "*" -> Deref
+                        --"*" -> Deref
                         "&" -> Ref 
                         _   -> error $ "Unknown operator: " ++ word2 ++ ". Original String: " ++ s
 
@@ -307,7 +309,7 @@ instance Read TACCode where
                 | opr' == Call   = (TACCode opr' (Just . read $ word0) (Just . read $ word3)  (Just . read $ word4), rest4)
                 | opr' == Minus  = ans2addrs 
                 | opr' == Neg    = ans2addrs 
-                | opr' == Deref  = ans2addrs 
+                -- | opr' == Deref  = ans2addrs 
                 | opr' == Ref    = ans2addrs
                 | otherwise  = error $ "Invalid operator: " ++ show opr'
         in [tcode]
