@@ -15,6 +15,7 @@
             - Variable  
             - Constant
 -}
+{-# OPTIONS_GHC -Wall #-}
 module TACTypes.TAC where
 import Data.Char(isDigit, isSpace)
 import qualified Data.List as L
@@ -42,52 +43,16 @@ data TACCode = TACCode
     } deriving (Eq)
 
 instance Show TACCode where
-    show TACCode {tacOperation=Assign,    tacLValue=Just lvoperand, tacRValue1=Just rvoperand, tacRValue2=Nothing } = "\t" ++ _showTwoOps lvoperand " := " rvoperand
-    show TACCode {tacOperation=Goto,      tacLValue=Just lvoperand, tacRValue1=Nothing,        tacRValue2=Nothing } = "\t" ++ _showOneOps " goto " lvoperand                                  -- goto LABEL
-    show TACCode {tacOperation=Goif,      tacLValue=Just lvoperand, tacRValue1=Just rvoperand, tacRValue2=Nothing } = "\tgoif " ++ show  lvoperand ++ " " ++ show rvoperand                   -- goto LABEL rvalue
-    show TACCode {tacOperation=MetaLabel, tacLValue=Just lvoperand, tacRValue1=Nothing,        tacRValue2=Nothing}  = _showOneOps "@label " lvoperand                                         -- @label MyLabel
-
-    show TACCode {tacOperation=Eq,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand " := " rvoperand1 " == " rvoperand2   -- x := y == z
-    show TACCode {tacOperation=Neq, tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand " := " rvoperand1 " != " rvoperand2   -- x := y != z
-    show TACCode {tacOperation=Lt,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand " := " rvoperand1 " < " rvoperand2    -- x := y < z
-    show TACCode {tacOperation=Leq, tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand " := " rvoperand1 " <= " rvoperand2   -- x := y <= z
-    show TACCode {tacOperation=Gt,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand " := " rvoperand1 " > " rvoperand2    -- x := y == z
-    show TACCode {tacOperation=Geq, tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand " := " rvoperand1 " >= " rvoperand2   -- x := y == z
-
-    show TACCode {tacOperation=And, tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2}   = "\t" ++ _showThreeOps lvoperand " := " rvoperand1 " && " rvoperand2   -- x := y == z
-    show TACCode {tacOperation=Or,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2}   = "\t" ++ _showThreeOps lvoperand " := " rvoperand1 " || " rvoperand2   -- x := y == z
-    show TACCode {tacOperation=Neg, tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing} = "\t" ++ _showTwoOps lvoperand " := ! " rvoperand1                                -- x := !y
-
-    show TACCode {tacOperation=Add,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand  " := " rvoperand1 " + " rvoperand2 -- lvalue := rvalue1 + ravlue2
-    show TACCode {tacOperation=Sub,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand  " := " rvoperand1 " - " rvoperand2 -- lvalue := rvalue1 - ravlue2
-    show TACCode {tacOperation=Mult, tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand  " := " rvoperand1 " * " rvoperand2 -- lvalue := rvalue1 * ravlue2
-    show TACCode {tacOperation=Div,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand  " := " rvoperand1 " / " rvoperand2 -- lvalue := rvalue1 / ravlue2
-    show TACCode {tacOperation=Mod,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand  " := " rvoperand1 " % " rvoperand2 -- lvalue := rvalue1 % ravlue2
-    show TACCode {tacOperation=Minus,tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing}   = "\t" ++ _showTwoOps lvoperand  " := - " rvoperand1                         -- lvalue := - rvalue1 
-
-    show TACCode {tacOperation=Malloc, tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing} = "\t" ++ _showTwoOps lvoperand  " := malloc( " rvoperand1 ++ " )"          -- lvalue := malloc(rvalue)
-    show TACCode {tacOperation=Free,   tacLValue=Just lvoperand, tacRValue1=Nothing,         tacRValue2=Nothing} = "\t" ++ _showOneOps "free " lvoperand                                     -- free lvalue
-    show TACCode {tacOperation=LDeref,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ show lvoperand ++ " [ " ++ show rvoperand1 ++ " ] := " ++ show rvoperand2        -- lvalue [ rvalue1 ] := rvalue2
-    show TACCode {tacOperation=RDeref,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ show lvoperand ++ " := " ++ show rvoperand1 ++ " [ " ++ show rvoperand2 ++ " ] " -- lvalue := rvalue1 [ rvalue2 ]
-    show TACCode {tacOperation=Ref,    tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing} = "\t" ++ _showTwoOps lvoperand  " := & " rvoperand1                        -- lvalue := &rvalue
-    show TACCode {tacOperation=MetaStaticv,  tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing} = "@staticv " ++ show lvoperand ++ " " ++ show rvoperand1             -- @staticv lvalue rvalue
-    show TACCode {tacOperation=MetaStaticStr, tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Nothing} = "@string " ++ show lvoperand ++ " \"" ++ show rvoperand1 ++ "\""   -- @string lvalue rvalue
-
-    show TACCode {tacOperation=Call, tacLValue=Just lvoperand, tacRValue1=Just rvoperand1, tacRValue2=Just rvoperand2} = "\t" ++ _showThreeOps lvoperand " := call " rvoperand1 " " rvoperand2 -- x := call FNAME 3
-    show TACCode {tacOperation=Param, tacLValue=Just lvoperand, tacRValue1=Nothing, tacRValue2=Nothing} = "\t" ++ _showOneOps "param " lvoperand
-
-    show (TACCode _tacOperation _tacLValue _tacRValue1 _tacRValue2) = error $
-        "Invalid configuration for TACCode."   ++
-        "\n\tOperator: " ++ show _tacOperation ++
-        "\n\tlvalue: "   ++ show _tacLValue    ++
-        "\n\trvalue 1: " ++ show _tacRValue1   ++
-        "\n\trvalue 2: " ++ show _tacRValue2
+    show (TACCode opr (Just lv) Nothing Nothing) = show opr ++ " " ++ show lv
+    show (TACCode opr (Just lv) (Just rv1) Nothing) = show opr ++ " " ++ show lv ++ " " ++ show rv1
+    show (TACCode opr (Just lv) (Just rv1) (Just rv2)) = show opr ++ " " ++ show lv ++ " " ++ show rv1 ++ " " ++ show rv2
+    show (TACCode opr lv rv1 rv2 ) = error "Invalid configuration for tac code: " ++ show opr ++ " " ++ show lv ++ " " ++ show rv1 ++ " " ++ show rv2
 
 -- | Possible values for an operation. 'a' should be SymEntryCompatible 
-data LVOperand =  
+data LVOperand =
         LVId String    |
-        LVLabel String 
-        
+        LVLabel String
+
         deriving(Eq)
 
 instance Show LVOperand where
@@ -158,7 +123,7 @@ data Operation =
     Call            | -- ^ Call a function with n stacked arguments
     Param             -- ^ Stack a parameter for a function
 
-    deriving (Eq, Show, Read)
+    deriving (Eq)
 
 -- | convert from string representation to a tac program
 parse :: String -> TACProgram
@@ -167,12 +132,82 @@ parse = TACProgram . map read . lines
 -- < TAC Utility Functions > ------------------------------
 -- | Shortcut function to create a tac code instance easier
 newTAC :: Operation -> LVOperand -> [RVOperand] -> TACCode
-newTAC opr lv [] = TACCode opr (Just lv) Nothing Nothing  
-newTAC opr lv [rv1] = TACCode opr (Just lv) (Just rv1) Nothing  
+newTAC opr lv [] = TACCode opr (Just lv) Nothing Nothing
+newTAC opr lv [rv1] = TACCode opr (Just lv) (Just rv1) Nothing
 newTAC opr lv [rv1, rv2] = TACCode opr (Just lv) (Just rv1) (Just rv2)
-newTAC _ _ _ = error "Invalid arguments"  
+newTAC _ _ _ = error "Invalid configuration for tac code"
 
 -- < Read & Show instances > ------------------------------
+
+instance Show Operation where
+    show Assign     = "assign"
+    show Goto       = "goto"
+    show Goif       = "goif"
+    show MetaLabel  = "@label"
+    show Eq         = "eq"
+    show Neq        = "neq"
+    show Lt         = "lt"
+    show Leq        = "leq"
+    show Gt         = "gt"
+    show Geq        = "geq"
+    show And        = "and"
+    show Or         = "or"
+    show Neg        = "neg"
+    show Add        = "add"
+    show Sub        = "sub"
+    show Mult       = "mult"
+    show Div        = "div"
+    show Mod        = "mod"
+    show Minus      = "minus"
+    show Malloc     = "malloc"
+    show Free       = "free"
+    show LDeref     = "lderef"
+    show RDeref     = "rderef"
+    show Ref        = "ref"
+    show MetaStaticv    = "@staticv"
+    show MetaStaticStr  = "@stringd"
+    show Call       = "call"
+    show Param      = "param"
+
+instance Read Operation where
+    readsPrec _ strOpr = res
+        where
+            -- split the command from the input
+            (opr, rest) = _nextWord strOpr
+
+            retOpr = case opr of
+                        "assign"    -> Assign
+                        "goto"      -> Goto
+                        "goif"      -> Goif
+                        "@label"    -> MetaLabel
+                        "eq"        -> Eq
+                        "neq"       -> Neq
+                        "lt"        -> Lt
+                        "leq"       -> Leq
+                        "gt"        -> Gt
+                        "geq"       -> Geq
+                        "and"       -> And
+                        "or"        -> Or
+                        "neg"       -> Neg
+                        "add"       -> Add
+                        "sub"       -> Sub
+                        "mult"      -> Mult
+                        "div"       -> Div
+                        "mod"       -> Mod
+                        "minus"     -> Minus
+                        "malloc"    -> Malloc
+                        "free"      -> Free
+                        "lderef"    -> LDeref
+                        "rderef"    -> RDeref
+                        "ref"       -> Ref
+                        "@staticv"  -> MetaStaticv
+                        "@stringd"  -> MetaStaticStr
+                        "call"      -> Call
+                        "param"     -> Param
+                        _ -> error $ "unexpected operation: " ++ opr
+
+            res = [(retOpr, rest)]
+
 instance Show TACProgram where
     show (TACProgram l) = unlines . map show $ l
 
@@ -200,17 +235,58 @@ instance Read ConstantValue where
         in res
 
 instance Read RVOperand where
-    readsPrec  _  s = 
-        let 
+    readsPrec  _  s =
+        let
             (word, rest) = _nextWord s
-            mbConstant = (readMaybe word :: Maybe  ConstantValue ) <&> Constant 
+            mbConstant = (readMaybe word :: Maybe  ConstantValue ) <&> Constant
             opr = fromMaybe (RVId word) mbConstant
         in [(opr, rest)]
 
 instance Read LVOperand where
-    readsPrec _ s = 
+    readsPrec _ s =
         let (word, rest) = _nextWord s;
         in [(LVId word, rest)]
+
+instance Read TACCode where
+    readsPrec _ s =
+        let
+            -- Split between next word and 
+            (strOpr,rest1) = _nextWord s
+
+        in [(_readTacCode (read strOpr) rest1, "")]
+
+-- Utility function to read a tac code from a string of arguments knowing the operator
+_readTacCode :: Operation -> String -> TACCode
+_readTacCode op@Goif s =
+    let
+        (label, rval) = case words s of
+            [labelStr, rvalStr] -> (labelStr,rvalStr)
+            _ -> error $ "Error: invalid arguments for goif operation: " ++ s
+
+    in
+        TACCode op (Just $ LVLabel label) (Just . read $ rval) Nothing
+
+_readTacCode op@Goto s =
+    let
+        label = case words s of
+            [label'] -> label'
+            _ -> error $ "Error: invalid arguments for goto operation: " ++ s
+
+    in
+        TACCode op (Just $ LVLabel label) Nothing Nothing
+
+_readTacCode op@MetaLabel s =
+    let 
+        TACCode _ lb Nothing  Nothing = _readTacCode Goto s
+    in 
+        TACCode op lb Nothing  Nothing 
+
+_readTacCode opr s = 
+    let 
+        lv:rvs = words s
+        lvalue = read lv :: LVOperand
+        rvalues = [read rv :: RVOperand | rv <- rvs]
+    in newTAC opr lvalue rvalues
 
 
 -- Utility function to get the next word
@@ -227,92 +303,7 @@ _startsWithUnary s = (`L.isPrefixOf` s) `any`  ["goto", "goif", "free", "@static
 _trim :: String -> String
 _trim = L.dropWhileEnd isSpace . dropWhile isSpace
 
--- Creat Read Instance to parse a tac program
-instance Read TACCode where
-    readsPrec _ s = 
-        let
-            (word0, rest0) = _nextWord s
-            (word1, rest1) = _nextWord rest0
-            (word2, rest2) = _nextWord rest1
-            (word3, rest3) = _nextWord rest2
-            (word4, rest4) = _nextWord rest3
-            opr' = case word0 of 
-                "goto"     -> Goto
-                "goif"     -> Goif
-                "@label"   -> MetaLabel
-                "free"     -> Free
-                "@staticv" -> MetaStaticv
-                "@string"  -> MetaStaticStr
-                "param"    -> Param
-                _ -> case word3 of
-                    "==" -> Eq 
-                    "!=" -> Neq
-                    "<"  -> Lt
-                    "<=" -> Leq
-                    ">"  -> Gt
-                    ">=" -> Geq
-                    "&&" -> And
-                    "||" -> Or
-                    "+"  -> Add
-                    "-"  -> Sub
-                    "*"  -> Mult
-                    "/"  -> Div
-                    "%"  -> Mod
-                    _ -> case word2 of
-                        "malloc(" -> Malloc
-                        "call"    -> Call
-                        "-" -> Minus
-                        "!" -> Neg
-                        --"*" -> Deref
-                        "&" -> Ref 
-                        _   -> error $ "Unknown operator: " ++ word2 ++ ". Original String: " ++ s
 
-            -- In case of 3 addr instr
-            ans3addrs = (TACCode opr' (Just . read $ word0) (Just . read $ word2) (Just . read $ word4), rest4)
-            ans2addrs = (TACCode opr' (Just . read $ word0) (Just . read $ word3) Nothing, rest3)
-            tcode 
-                -- Examples: 
-                -- word0 word1 word2 word3 word4 
-                -- x      :=    b     +     y
-                -- free   x
-                -- goif   x     z
-                -- x      :=   -      y
-                -- x      :=  malloc( y    )
-                -- x      :=   call   lb    rv
-
-                -- Unary operators
-                | opr' == Goif = (TACCode opr' (Just $ LVLabel word1) (Just . read $ word2) Nothing, rest2)
-                | opr' == Goto = (TACCode opr' (Just $ LVLabel word1) Nothing Nothing, rest1)
-                | opr' == Free = (TACCode opr' (Just $ LVId word1) Nothing Nothing, rest1)
-                | opr' == MetaLabel     = (TACCode opr' (Just $ LVId word1) Nothing Nothing, rest1)
-                | opr' == Param         = (TACCode opr' (Just $ LVId word1) Nothing Nothing, rest1)
-
-                -- 3 addrs operators
-                | opr' == Eq   = ans3addrs
-                | opr' == Neq  = ans3addrs 
-                | opr' == Lt   = ans3addrs 
-                | opr' == Leq  = ans3addrs 
-                | opr' == Gt   = ans3addrs 
-                | opr' == Geq  = ans3addrs 
-                | opr' == And  = ans3addrs 
-                | opr' == Or   = ans3addrs 
-                | opr' == Add  = ans3addrs 
-                | opr' == Sub  = ans3addrs 
-                | opr' == Mult = ans3addrs 
-                | opr' == Div  = ans3addrs 
-                | opr' == Mod  = ans3addrs 
-
-                -- 2 addrs operators
-                | opr' == MetaStaticv   = (TACCode opr' (Just $ LVId word1)(Just . read $ word2) Nothing, rest2)
-                | opr' == MetaStaticStr = (TACCode opr' (Just $ LVId word1)(Just . read $ word2) Nothing, rest2)
-                | opr' == Malloc = (TACCode opr' (Just . read $ word0) (Just . read $ word3) Nothing, rest4)
-                | opr' == Call   = (TACCode opr' (Just . read $ word0) (Just . read $ word3)  (Just . read $ word4), rest4)
-                | opr' == Minus  = ans2addrs 
-                | opr' == Neg    = ans2addrs 
-                -- | opr' == Deref  = ans2addrs 
-                | opr' == Ref    = ans2addrs
-                | otherwise  = error $ "Invalid operator: " ++ show opr'
-        in [tcode]
 
 
 -- < Utility Functions > ---
