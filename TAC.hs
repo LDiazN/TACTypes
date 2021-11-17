@@ -160,6 +160,13 @@ data Operation =
 
     deriving (Eq, Show, Read)
 
+
+-- | Get the current BASE id. 
+-- | BASE value is updated implicitly.
+-- | Will be implemented in target code.
+base :: String
+base = "BASE"
+
 -- | convert from string representation to a tac program
 parse :: String -> TACProgram
 parse = TACProgram . map read . lines
