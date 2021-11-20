@@ -37,9 +37,9 @@ newtype TACProgram = TACProgram [TACCode]
 data TACCode = TACCode
     {
         tacOperation :: Operation,          -- ^ tells which operation will be performed 
-        tacLValue  :: Maybe LVOperand,      -- ^ Where the result will be stored
-        tacRValue1 :: Maybe RVOperand,  -- ^ first operation argument 
-        tacRValue2 :: Maybe RVOperand   -- ^ Second operation argument 
+        tacLValue  :: Maybe Operand,      -- ^ Where the result will be stored
+        tacRValue1 :: Maybe Operand,  -- ^ first operation argument 
+        tacRValue2 :: Maybe Operand   -- ^ Second operation argument 
     } deriving (Eq)
 
 instance Show TACCode where
@@ -48,21 +48,10 @@ instance Show TACCode where
     show (TACCode opr (Just lv) (Just rv1) (Just rv2)) = show opr ++ " " ++ show lv ++ " " ++ show rv1 ++ " " ++ show rv2
     show (TACCode opr lv rv1 rv2 ) = error "Invalid configuration for tac code: " ++ show opr ++ " " ++ show lv ++ " " ++ show rv1 ++ " " ++ show rv2
 
--- | Possible values for an operation. 'a' should be SymEntryCompatible 
-data LVOperand =
-        LVId String    |
-        LVLabel String
-
-        deriving(Eq)
-
-instance Show LVOperand where
-    show (LVId sym) = sym
-    show (LVLabel l) = l
-
 -- | Possible variations for an r-value. 
-data RVOperand =
-    RVId String    |       -- ^ A variable defined by its name. 
-    RVLabel String   |       -- ^ A label value, with a string as its name
+data Operand =
+    Id String    |       -- ^ A variable defined by its name. 
+    Label String   |       -- ^ A label value, with a string as its name
     Constant ConstantValue -- ^ A constant with its corresponding value
     deriving(Eq)
 
@@ -75,9 +64,9 @@ data ConstantValue =
     String String
     deriving(Eq)
 
-instance Show RVOperand where
-    show (RVId sym) =  sym
-    show (RVLabel s) = s
+instance Show Operand where
+    show (Id sym) =  sym
+    show (Label s) = s
     show (Constant cv) = show cv
 
 -- | Possible operation you can perform with the given operands, describes the generated TACCode
@@ -119,9 +108,19 @@ data Operation =
     MetaStaticv     | -- ^ Create a static variable named by a given name with the requested size in bytes and return its address
     MetaStaticStr   | -- ^ Create a static string named by a given name and return its address
 
+    -- IO 
+    Print           | -- ^ Print the given object to stdout
+    Read            | -- ^ Read a string into memory 
+
     -- Function calling
     Call            | -- ^ Call a function with n stacked arguments
-    Param             -- ^ Stack a parameter for a function
+    Param           | -- ^ Stack a parameter for a function
+    Return          | -- ^ end a function
+    MetaBeginFunc   | -- ^ Mark start of a new function 
+    MetaEndfunc     | -- ^ Mark end a function 
+
+    -- Misc
+    MetaComment       -- ^ Mark a comment string
 
     deriving (Eq)
 
@@ -138,7 +137,7 @@ parse = TACProgram . map read . lines
 
 -- < TAC Utility Functions > ------------------------------
 -- | Shortcut function to create a tac code instance easier
-newTAC :: Operation -> LVOperand -> [RVOperand] -> TACCode
+newTAC :: Operation -> Operand -> [Operand] -> TACCode
 newTAC opr lv [] = TACCode opr (Just lv) Nothing Nothing
 newTAC opr lv [rv1] = TACCode opr (Just lv) (Just rv1) Nothing
 newTAC opr lv [rv1, rv2] = TACCode opr (Just lv) (Just rv1) (Just rv2)
@@ -173,8 +172,14 @@ instance Show Operation where
     show Ref        = "ref"
     show MetaStaticv    = "@staticv"
     show MetaStaticStr  = "@stringd"
+    show Read           = "read"
+    show Print          = "Print"
     show Call       = "call"
     show Param      = "param"
+    show Return     = "return"
+    show MetaEndfunc = "@endfunction"
+    show MetaBeginFunc = "@function"
+    show MetaComment = "@comment"
 
 instance Read Operation where
     readsPrec _ strOpr = res
@@ -241,18 +246,13 @@ instance Read ConstantValue where
                 | otherwise  = [(Int (read nums1), rest1)]
         in res
 
-instance Read RVOperand where
+instance Read Operand where
     readsPrec  _  s =
         let
             (word, rest) = _nextWord s
             mbConstant = (readMaybe word :: Maybe  ConstantValue ) <&> Constant
-            opr = fromMaybe (RVId word) mbConstant
+            opr = fromMaybe (Id word) mbConstant
         in [(opr, rest)]
-
-instance Read LVOperand where
-    readsPrec _ s =
-        let (word, rest) = _nextWord s;
-        in [(LVId word, rest)]
 
 instance Read TACCode where
     readsPrec _ s =
@@ -271,7 +271,7 @@ _readTacCode op@Goif s =
             _ -> error $ "Error: invalid arguments for goif operation: " ++ s
 
     in
-        TACCode op (Just $ LVLabel label) (Just . read $ rval) Nothing
+        TACCode op (Just $ Label label) (Just . read $ rval) Nothing
 
 _readTacCode op@Goto s =
     let
@@ -280,7 +280,7 @@ _readTacCode op@Goto s =
             _ -> error $ "Error: invalid arguments for goto operation: " ++ s
 
     in
-        TACCode op (Just $ LVLabel label) Nothing Nothing
+        TACCode op (Just $ Label label) Nothing Nothing
 
 _readTacCode op@MetaLabel s =
     let 
@@ -291,8 +291,8 @@ _readTacCode op@MetaLabel s =
 _readTacCode opr s = 
     let 
         lv:rvs = words s
-        lvalue = read lv :: LVOperand
-        rvalues = [read rv :: RVOperand | rv <- rvs]
+        lvalue = read lv :: Operand
+        rvalues = [read rv :: Operand | rv <- rvs]
     in newTAC opr lvalue rvalues
 
 
@@ -310,16 +310,13 @@ _startsWithUnary s = (`L.isPrefixOf` s) `any`  ["goto", "goif", "free", "@static
 _trim :: String -> String
 _trim = L.dropWhileEnd isSpace . dropWhile isSpace
 
-
-
-
 -- < Utility Functions > ---
-_showThreeOps :: LVOperand -> String -> RVOperand -> String -> RVOperand -> String
+_showThreeOps :: Operand -> String -> Operand -> String -> Operand -> String
 _showThreeOps lvopr s1 rvopr1 s2 rvopr2 = show lvopr ++ s1 ++ show rvopr1 ++ s2 ++ show rvopr2
 
-_showTwoOps :: LVOperand -> String -> RVOperand -> String
+_showTwoOps :: Operand -> String -> Operand -> String
 _showTwoOps lvopr s1 rvopr1 = show lvopr ++ s1 ++ show rvopr1
 
-_showOneOps :: String -> LVOperand -> String
+_showOneOps :: String -> Operand -> String
 _showOneOps s lvopr = s ++ show lvopr
 
