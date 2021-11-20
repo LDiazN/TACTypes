@@ -117,7 +117,7 @@ data Operation =
     Param           | -- ^ Stack a parameter for a function
     Return          | -- ^ end a function
     MetaBeginFunc   | -- ^ Mark start of a new function 
-    MetaEndfunc     | -- ^ Mark end a function 
+    MetaEndFunc     | -- ^ Mark end a function 
 
     -- Misc
     MetaComment       -- ^ Mark a comment string
@@ -177,7 +177,7 @@ instance Show Operation where
     show Call       = "call"
     show Param      = "param"
     show Return     = "return"
-    show MetaEndfunc = "@endfunction"
+    show MetaEndFunc = "@endfunction"
     show MetaBeginFunc = "@function"
     show MetaComment = "@comment"
 
@@ -216,6 +216,12 @@ instance Read Operation where
                         "@stringd"  -> MetaStaticStr
                         "call"      -> Call
                         "param"     -> Param
+                        "return"    -> Return
+                        "print"     -> Print
+                        "read"      -> Read
+                        "@comment"  -> MetaComment
+                        "@function" -> MetaBeginFunc
+                        "@endfunction"-> MetaEndFunc
                         _ -> error $ "unexpected operation: " ++ opr
 
             res = [(retOpr, rest)]
