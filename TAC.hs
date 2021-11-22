@@ -120,8 +120,8 @@ data Operation =
     MetaEndFunc     | -- ^ Mark end a function 
 
     -- Misc
-    MetaComment       -- ^ Mark a comment string
-
+    MetaComment     | -- ^ Mark a comment string
+    Exit 
     deriving (Eq)
 
 
@@ -179,7 +179,8 @@ instance Show Operation where
     show Return     = "return"
     show MetaEndFunc = "@endfunction"
     show MetaBeginFunc = "@function"
-    show MetaComment = "@comment"
+    show MetaComment = "#"
+    show Exit        = "exit"
 
 instance Read Operation where
     readsPrec _ strOpr = res
@@ -219,7 +220,7 @@ instance Read Operation where
                         "return"    -> Return
                         "print"     -> Print
                         "read"      -> Read
-                        "@comment"  -> MetaComment
+                        "#"  -> MetaComment
                         "@function" -> MetaBeginFunc
                         "@endfunction"-> MetaEndFunc
                         _ -> error $ "unexpected operation: " ++ opr
