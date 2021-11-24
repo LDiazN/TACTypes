@@ -107,6 +107,8 @@ data Operation =
     Ref             | -- ^ get memory address associated with a tac id
     MetaStaticv     | -- ^ Create a static variable named by a given name with the requested size in bytes and return its address
     MetaStaticStr   | -- ^ Create a static string named by a given name and return its address
+    MemCopy         | -- ^ Copy an object
+    Deref           | -- ^ Deref a Pointer to the heap
 
     -- IO 
     Print           | -- ^ Print the given object to stdout
@@ -181,6 +183,9 @@ instance Show Operation where
     show MetaBeginFunc = "@function"
     show MetaComment = "#"
     show Exit        = "exit"
+    show Deref       = "deref"
+    show MemCopy     = "memcopy"
+    
 
 instance Read Operation where
     readsPrec _ strOpr = res
