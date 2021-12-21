@@ -71,11 +71,13 @@ instance Show Operand where
 
 -- | Possible operation you can perform with the given operands, describes the generated TACCode
 data Operation =
-    Assign      |
+    Assign      |   -- ^ Assign a word
+    Assignb     |   -- ^ Assign a byte
 
     -- Jumps & control flow
     Goto        |   -- ^ Go to specific Label
     Goif        |   -- ^ Go to specific Label when the given variable is true
+    GoifNot     |   -- ^ Go to specific Label when the given variable is false
     MetaLabel   |   -- ^ Meta instruction to define a label at some specific point in the program
 
     -- Relational operators
@@ -103,7 +105,9 @@ data Operation =
     Malloc          | -- ^ Get n bytes of memory and return its start point 
     Free            | -- ^ Free the memory starting at the given location
     LDeref          | -- ^ assign value in this memory address with the given offset
+    LDerefb         | -- ^ same as LDeref, but assigns only a byte
     RDeref          | -- ^ retrieve value in this memory address with the given offset
+    RDerefb         | -- ^ same as RDeref, but assigns only a byte
     Ref             | -- ^ get memory address associated with a tac id
     MetaStaticv     | -- ^ Create a static variable named by a given name with the requested size in bytes and return its address
     MetaStaticStr   | -- ^ Create a static string named by a given name and return its address
@@ -111,8 +115,14 @@ data Operation =
     Deref           | -- ^ Deref a Pointer to the heap
 
     -- IO 
-    Print           | -- ^ Print the given object to stdout
-    Read            | -- ^ Read a string into memory 
+    Print           | -- ^ Print the given string to stdout
+    Printi          | -- ^ Print the given integer to stdout
+    Printf          | -- ^ Print the given float to stdout
+    Printc          | -- ^ Print the given char to stdout
+    Read            | -- ^ Read a string from stdin
+    Readi           | -- ^ Read a integer from stdin
+    Readf           | -- ^ Read a float from stdin 
+    Readc           | -- ^ Read a char from stdin
 
     -- Function calling
     Call            | -- ^ Call a function with n stacked arguments
