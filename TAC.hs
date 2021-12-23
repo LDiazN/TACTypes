@@ -108,7 +108,7 @@ data Operation =
     LDerefb         | -- ^ same as LDeref, but assigns only a byte
     RDeref          | -- ^ retrieve value in this memory address with the given offset
     RDerefb         | -- ^ same as RDeref, but assigns only a byte
-    Ref             | -- ^ get memory address associated with a tac id
+    -- Ref             | -- ^ get memory address associated with a tac id
     MetaStaticv     | -- ^ Create a static variable named by a given name with the requested size in bytes and return its address
     MetaStaticStr   | -- ^ Create a static string named by a given name and return its address
     MemCopy         | -- ^ Copy an object
@@ -133,6 +133,8 @@ data Operation =
 
     -- Misc
     MetaComment     | -- ^ Mark a comment string
+    FloatToInt      | -- ^ ftoi Id Val # Cast float to Int
+    IntToFloat      | -- ^ itof Id Val # Cast Int to float
     Exit 
     deriving (Eq)
 
@@ -158,7 +160,7 @@ newTAC _ _ _ = error "Invalid configuration for tac code"
 -- < Read & Show instances > ------------------------------
 
 instance Show Operation where
-    show Assign     = "assign"
+    show Assign     = "assignw"
     show Goto       = "goto"
     show Goif       = "goif"
     show MetaLabel  = "@label"
@@ -179,13 +181,11 @@ instance Show Operation where
     show Minus      = "minus"
     show Malloc     = "malloc"
     show Free       = "free"
-    show LDeref     = "lderef"
-    show RDeref     = "rderef"
+    show LDeref     = "lderefw"
+    show RDeref     = "rderefw"
     show Ref        = "ref"
     show MetaStaticv    = "@staticv"
     show MetaStaticStr  = "@stringd"
-    show Read           = "read"
-    show Print          = "Print"
     show Call       = "call"
     show Param      = "param"
     show Return     = "return"
@@ -195,6 +195,20 @@ instance Show Operation where
     show Exit        = "exit"
     show Deref       = "deref"
     show MemCopy     = "memcopy"
+    show FloatToInt  = "ftoi"
+    show IntToFloat  = "itof"
+    show LDerefb     = "lderefb"
+    show RDerefb     = "rderefb"
+    show Assignb     = "assignb"
+    show GoifNot     = "goifnot"
+    show Print       = "print"
+    show Printi      = "printi"
+    show Printf      = "printf"
+    show Printc      = "printc"
+    show Read        = "read"
+    show Readi       = "readi"
+    show Readf       = "readf"
+    show Readc       = "readc"
     
 
 instance Read Operation where
