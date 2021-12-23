@@ -145,6 +145,10 @@ data Operation =
 base :: String
 base = "BASE"
 
+-- | Get the current STACK value
+stack :: String
+stack = "STACK"
+
 -- | convert from string representation to a tac program
 parse :: String -> TACProgram
 parse = TACProgram . map read . lines
@@ -183,7 +187,6 @@ instance Show Operation where
     show Free       = "free"
     show LDeref     = "lderefw"
     show RDeref     = "rderefw"
-    show Ref        = "ref"
     show MetaStaticv    = "@staticv"
     show MetaStaticStr  = "@stringd"
     show Call       = "call"
@@ -241,7 +244,6 @@ instance Read Operation where
                         "free"      -> Free
                         "lderef"    -> LDeref
                         "rderef"    -> RDeref
-                        "ref"       -> Ref
                         "@staticv"  -> MetaStaticv
                         "@stringd"  -> MetaStaticStr
                         "call"      -> Call
