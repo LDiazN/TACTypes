@@ -51,7 +51,7 @@ You can use the following grammar to parse a tac file
 S     -> Data Text
 Data  -> *lambda*           // Data section
       |  D Data
-D     -> @staticv ID INT \n
+D     -> @staticv ID Constant \n
       |  @string ID STRING
 
 Text  -> *lambda*
