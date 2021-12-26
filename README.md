@@ -102,7 +102,8 @@ F    -> @fun_begin ID SIZE \n
 
 Acc  -> ID [ Val ] // memory access
 LVal -> ID | Acc   // l-value
-Val  -> TRUE | FALSE | CHAR | INT | FLOAT | ID 
+Val  -> Constant | ID 
+Constant -> TRUE | FALSE | CHAR | INT | FLOAT
 RVal -> Val | Acc                     // r-value
 ID   -> (Possible name for a variable)
 ```
