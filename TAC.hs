@@ -45,6 +45,10 @@ data TACCode = TACCode
 instance Show TACCode where
     show (TACCode opr (Just lv) Nothing Nothing) = show opr ++ " " ++ show lv
     show (TACCode opr (Just lv) (Just rv1) Nothing) = show opr ++ " " ++ show lv ++ " " ++ show rv1
+    show (TACCode LDeref (Just lv) (Just rv1) (Just rv2)) = show Assign ++ " " ++ show lv ++ "[" ++ show rv1 ++ "] " ++ show rv2
+    show (TACCode LDerefb (Just lv) (Just rv1) (Just rv2)) = show Assignb ++ " " ++ show lv ++ "[" ++ show rv1 ++ "] " ++ show rv2 
+    show (TACCode RDeref (Just lv) (Just rv1) (Just rv2)) = show Assign ++ " " ++ show lv ++ " " ++ show rv1 ++ "[" ++ show rv2 ++ "]"
+    show (TACCode RDerefb (Just lv) (Just rv1) (Just rv2)) = show Assignb ++ " " ++ show lv ++ " " ++ show rv1 ++ "[" ++ show rv2 ++ "]"
     show (TACCode opr (Just lv) (Just rv1) (Just rv2)) = show opr ++ " " ++ show lv ++ " " ++ show rv1 ++ " " ++ show rv2
     show (TACCode opr lv rv1 rv2 ) = error "Invalid configuration for tac code: " ++ show opr ++ " " ++ show lv ++ " " ++ show rv1 ++ " " ++ show rv2
 
@@ -197,7 +201,7 @@ instance Show Operation where
     show MetaComment = "#"
     show Exit        = "exit"
     show Deref       = "deref"
-    show MemCopy     = "memcopy"
+    show MemCopy     = "memcpy"
     show FloatToInt  = "ftoi"
     show IntToFloat  = "itof"
     show LDerefb     = "lderefb"
