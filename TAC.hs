@@ -192,7 +192,7 @@ instance Show Operation where
     show LDeref     = "lderefw"
     show RDeref     = "rderefw"
     show MetaStaticv    = "@staticv"
-    show MetaStaticStr  = "@stringd"
+    show MetaStaticStr  = "@string"
     show Call       = "call"
     show Param      = "param"
     show Return     = "return"
