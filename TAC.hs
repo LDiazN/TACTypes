@@ -266,11 +266,19 @@ instance Show TACProgram where
     show (TACProgram l) = unlines . map show $ l
 
 instance Show ConstantValue where
+    show (Char '\n') = ['\'','\\','n','\'']
+    show (Char '\t') = ['\'','\\','t','\'']
     show (Char c) = ['\'', c, '\'']
     show (Float f) = show f
     show (Int i) = show i
     show (Bool b) = show b
-    show (String s) = s
+    show (String s) = replaceSpecialChar s
+
+replaceSpecialChar :: String -> String
+replaceSpecialChar [] = []
+replaceSpecialChar ('\n':s) = "\\n" ++ replaceSpecialChar s
+replaceSpecialChar ('\t':s) = "\\t" ++ replaceSpecialChar s
+replaceSpecialChar (s:ss) = (s:replaceSpecialChar ss) 
 
 instance Read ConstantValue where
     readsPrec _ ('\'' : c : '\'' : rest) = [(Char c, rest)]
